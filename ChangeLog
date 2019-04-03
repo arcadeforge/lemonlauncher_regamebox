@@ -1,0 +1,87 @@
+ Dec 20/2007
+=======================
++ added a 'rotate' option for controlling the orientation of the interface
++ any 'skin' verbiage has been changed to 'theme'
++ fixed possible memory leak in config file resolving function
+
+ Nov 27/2007
+=======================
++ use stat in layout class to test if a file exists
++ added support for relative paths in theme files
+
+ Nov 26/2007
+=======================
++ auto-sort root menu
++ fixed list item being drawn below bottom bounds
+
+ Nov 21/2007
+=======================
++ added menu sorting in alphabetic order (enabled by default)
++ removed the double mapping of controls for certain functions
++ added alphabetic page up/down control
++ changed around key mapping option names to reflect their logical use
+
+ Nov 10/2007
+=======================
++ added option for setting skin file path
++ fixed bug in menu class (garbage in selected index)
++ appended .sample to all sample conf files
++ set some reasonable defaults for skin/layout
++ fixed missing %r in default mame option
++ removed exception throw when snap option is missing %r (warn instead)
+
+ Nov 09/2007
+=======================
++ finished implementing layout class
++ removed ui related options from lemonlauncher.conf
++ removed page_size option since it can be calculated
++ added text justification option for list items
+
+ Nov 08/2007
+=======================
++ separated menu elements (item/menu/game) into their own header files
++ new layout class to handle rendering of the interface
+
+ Nov 04/2007
+=======================
++ removed "params" option (not needed, see below)
++ renamed "path" option to "mame"
++ renamed "snaps" option to "snap"
++ "mame" and "snap" path options must contain the '%r' specifier which will
+  be replaced with the short rom name.  this removes the need for the params
+  option since the "mame" path can contain command line switches.
++ dissable sdl mouse cursor
++ enabled key repeat (default delay/interval)
++ removed delayed event queue resuming after mame exits
+
+ Oct  01/2007
+=======================
++ made option files completely optional
++ added build parameter to set default font
++ added build step to convert default font into static resource
++ moved snapshot finding logic to the game and menu classes
+
+ Sept 26/2007
+=======================
++ added options for customizing font colors, snapshot delay,
+  and snapshot alpha blending
++ removed unused rompath option since this can be set via
+  the mame params option
++ added check for config directory override in config.h
++ moved exception class to it's own header file
+
+0.0.3
+-------------------
+
+- made a windows version
+
+0.0.2
+-------------------
+
+- fixed snap shot generation, generates numbered snaps
+- added hidden menu and games. prefix name with a '.'
+
+0.0.1 - Feb 24/2003
+-------------------
+
+- initial version
