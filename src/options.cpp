@@ -84,6 +84,7 @@ void options::load(const char* conf_dir)
       CFG_STR(KEY_MAME_PATH, "mame %r", CFGF_NONE),
       CFG_STR(KEY_MAME_SNAP_PATH, "", CFGF_NONE),
       CFG_STR(KEY_MAME_VIDEO_PATH, "", CFGF_NONE),
+      CFG_STR(KEY_MAME_VIDEO_VOL, "100", CFGF_NONE),
 
       CFG_INT(KEY_KEYCODE_UP, 273, CFGF_NONE),
       CFG_INT(KEY_KEYCODE_DOWN, 274, CFGF_NONE),

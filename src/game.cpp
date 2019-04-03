@@ -39,6 +39,8 @@ SDL_Surface* game::snapshot()
     string video_x2(g_opts.get_string(KEY_VIDEO_X2));
     string video_y2(g_opts.get_string(KEY_VIDEO_Y2));
     string video_or(g_opts.get_string(KEY_VIDEO_OR));
+
+    string video_vol(g_opts.get_string(KEY_MAME_VIDEO_VOL));
    
     size_t pos = img.find("%r");
     if (pos == string::npos) {
@@ -49,16 +51,21 @@ SDL_Surface* game::snapshot()
     size_t pos_vid = vid.find("%r");
     if (pos_vid == string::npos) {
         log << warn << "game::snapshot: video option missing %r specifier" << endl;
-        return NULL;
+        //return NULL;
+        printf("no video");
+    } 
+    else
+    {
+        vid.replace(pos_vid, 2, rom());
     }
     img.replace(pos, 2, rom());
-    vid.replace(pos_vid, 2, rom());
    
     system("pkill -9 omxplayer"); 
     char buf[1024];
 
     char testbuf[5];
-    char test[] = "0000";
+    //char test[] = "0000";
+    string test = "";
 
     // when no video player parameter in lemonlaunch.conf are
     // given the default value 0 will be taken. 
@@ -67,13 +74,14 @@ SDL_Surface* game::snapshot()
     //printf("test#%s#\n", test);
     //printf("testbuf#%s#\n", testbuf);
 
-    if ( strcmp(testbuf, test) == 0) 
+//    if ( strcmp(testbuf, test) == 0) 
+    if ( vid == test ) 
     {
         //printf("no video\n");
     } else {
         //printf("omx player\n");
 
-        snprintf(buf, sizeof(buf), "omxplayer --orientation %s --win \"%s %s %s %s\" %s > /dev/null 2>&1 &", video_or.c_str(), video_x1.c_str(), video_y1.c_str(), video_x2.c_str(), video_y2.c_str(), vid.c_str());
+        snprintf(buf, sizeof(buf), "omxplayer --orientation %s --win \"%s %s %s %s\" --vol %s %s > /dev/null 2>&1 &", video_or.c_str(), video_x1.c_str(), video_y1.c_str(), video_x2.c_str(), video_y2.c_str(), video_vol.c_str(), vid.c_str());
         //snprintf(buf, sizeof(buf), "omxplayer --win \"%s %s %s %s\" %s > /dev/null 2>&1 &", video_x1.c_str(), video_y1.c_str(), video_x2.c_str(), video_y2.c_str(), vid.c_str());
         system(buf);
         //system("omxplayer --win \"100 100 320 240\" /root/w.mp4 > /dev/null 2>&1 &");

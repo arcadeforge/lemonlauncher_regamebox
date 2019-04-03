@@ -58,6 +58,7 @@ namespace ll {
 #define KEY_MAME_PATH       "mame"
 #define KEY_MAME_SNAP_PATH  "snap"
 #define KEY_MAME_VIDEO_PATH  "video"
+#define KEY_MAME_VIDEO_VOL  "video_volume"
 
 /* Key mapping */
 #define KEY_KEYCODE_EXIT      "exit"
