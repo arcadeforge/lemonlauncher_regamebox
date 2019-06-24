@@ -24,13 +24,20 @@
 #include <string>
 #include <stdlib.h>
 
+#include <linux/fb.h>
+#include <iostream>
+#include <fcntl.h>
+#include <stdio.h>
+#include <sys/ioctl.h>
+
 #include "error.h"
 #include "options.h"
 #include "log.h"
 #include "lemonmenu.h"
 
 
-#include "bcm2835.h"
+#include <bcm2835.h>
+
 #include <stdio.h>
 
 #include "gpio_joystick.h"
@@ -39,94 +46,117 @@
 using namespace ll;
 using namespace std;
 
+int FB_XRES = 0;
+int FB_YRES = 0;
+
 int main(int argc, char** argv)
 {
 #ifdef HAVE_CONF_DIR
-   string dir(HAVE_CONF_DIR);
+    string dir(HAVE_CONF_DIR);
 #else
-   string dir(getenv("HOME"));
-   dir.append("/.lemonlauncher");
+    string dir(getenv("HOME"));
+    dir.append("/.lemonlauncher");
 #endif
-   
-   g_opts.load(dir.c_str());
-   
-   int level = g_opts.get_int(KEY_LOGLEVEL);
-   log.level((log_level)level);
-   log << info << "main: setting log level " << level << endl;
-   
-   log << info << PACKAGE_STRING << endl;
+
+    g_opts.load(dir.c_str());
+
+    int level = g_opts.get_int(KEY_LOGLEVEL);
+    log.level((log_level)level);
+    log << info << "main: setting log level " << level << endl;
+
+    log << info << PACKAGE_STRING << endl;
 
 
 
-   if(strcmp("y", g_opts.get_string(KEY_PI2JAMMAJOYSTICK) ) == 0) {
-   //open bcm2835 for gpio joystick
-      log << info << "main: bcm2835 open " << level << endl;
-   if (!bcm2835_init())
-     {
-       log << error << "main: unable to open bcm2835" << endl;
-       exit(1);
-     }
-   // Set the pins to be an output
-   bcm2835_gpio_fsel(CLK, BCM2835_GPIO_FSEL_OUTP);
-   bcm2835_gpio_fsel(PL, BCM2835_GPIO_FSEL_OUTP);
-   // Set the pin to be an input
-   bcm2835_gpio_fsel(DIN, BCM2835_GPIO_FSEL_INPT);
-   }
+    if(strcmp("y", g_opts.get_string(KEY_PI2JAMMAJOYSTICK) ) == 0) {
+        //open bcm2835 for gpio joystick
+        log << info << "main: bcm2835 open " << level << endl;
+        if (!bcm2835_init())
+        {
+            log << error << "main: unable to open bcm2835" << endl;
+            exit(1);
+        }
+        // Set the pins to be an output
+        bcm2835_gpio_fsel(CLK, BCM2835_GPIO_FSEL_OUTP);
+        bcm2835_gpio_fsel(PL, BCM2835_GPIO_FSEL_OUTP);
+        // Set the pin to be an input
+        bcm2835_gpio_fsel(DIN, BCM2835_GPIO_FSEL_INPT);
+    }
+
+    /**** framebuffer resolution ****/
+    struct fb_var_screeninfo vinfo;
+    int fh = open("/dev/fb0", O_RDONLY);
+    if ( fh < 0)
+    {
+        log << debug << "main: unable to open /dev/fb0 "  << endl;
+    }
+
+    if ( ioctl (fh, FBIOGET_VSCREENINFO, &vinfo) != 0) 
+    {
+        log << debug << "main: ioctl FBIOGET_VSCREENINFO failed "  << endl;
+    }
+    else
+    {
+        //printf ("framebuffer : %dx%d \n", vinfo.xres, vinfo.yres);
+    }
+    /***/
+    
+    // initialize sdl
+    SDL_Init(SDL_INIT_AUDIO | SDL_INIT_VIDEO | SDL_INIT_TIMER | SDL_INIT_JOYSTICK);
+    // hide mouse cursor
+    SDL_ShowCursor(SDL_DISABLE);
+
+    // enable key-repeat, use defaults delay and interval for now
+    SDL_EnableKeyRepeat(SDL_DEFAULT_REPEAT_DELAY, SDL_DEFAULT_REPEAT_INTERVAL);
+
+    // create a screen to draw on
+    SDL_Surface* screen;
+
+    int xres = g_opts.get_int(KEY_SCREEN_WIDTH);
+    int yres = g_opts.get_int(KEY_SCREEN_HEIGHT);
+    int bits = g_opts.get_int(KEY_SCREEN_BPP);
+    bool full = g_opts.get_bool(KEY_FULLSCREEN);
+
+    log << info << "main: using graphics mode: " << xres <<'x'<< yres <<'x'<< bits << endl;
+
+    screen = SDL_SetVideoMode(xres, yres, bits, SDL_SWSURFACE | (full ? SDL_FULLSCREEN : 0));
+    //screen = SDL_SetVideoMode(xres, yres, bits, SDL_HWSURFACE | (full ? SDL_FULLSCREEN : 0));
+    if (!screen) {
+        log << error << "main: unable to open screen" << endl;
+        return 1;
+    }
+
+    // init the font engine
+    if (TTF_Init()) {
+        log << error << "main: unable to start font engine" << endl;
+        SDL_Quit();
+        return 1;
+    }
+
+    lemon_menu* menu = NULL;
+    try {
+
+        menu = new lemon_menu(screen, vinfo.xres, vinfo.yres);
+        menu->main_loop();
 
 
-   
-   // initialize sdl
-   SDL_Init(SDL_INIT_AUDIO | SDL_INIT_VIDEO | SDL_INIT_TIMER | SDL_INIT_JOYSTICK);
-   // hide mouse cursor
-   SDL_ShowCursor(SDL_DISABLE);
-   
-   // enable key-repeat, use defaults delay and interval for now
-   SDL_EnableKeyRepeat(SDL_DEFAULT_REPEAT_DELAY, SDL_DEFAULT_REPEAT_INTERVAL);
-   
-   // create a screen to draw on
-   SDL_Surface* screen;
-   
-   int xres = g_opts.get_int(KEY_SCREEN_WIDTH);
-   int yres = g_opts.get_int(KEY_SCREEN_HEIGHT);
-   int bits = g_opts.get_int(KEY_SCREEN_BPP);
-   bool full = g_opts.get_bool(KEY_FULLSCREEN);
-   
-   log << info << "main: using graphics mode: " << xres <<'x'<< yres <<'x'<< bits << endl;
-   
-   screen = SDL_SetVideoMode(xres, yres, bits, SDL_SWSURFACE | (full ? SDL_FULLSCREEN : 0));
-   if (!screen) {
-      log << error << "main: unable to open screen" << endl;
-      return 1;
-   }
-
-   // init the font engine
-   if (TTF_Init()) {
-      log << error << "main: unable to start font engine" << endl;
-      SDL_Quit();
-      return 1;
-   }
-   
-   lemon_menu* menu = NULL;
-   try {
-      menu = new lemon_menu(screen);
-      menu->main_loop();
-   } catch (bad_lemon& e) {
+    } catch (bad_lemon& e) {
       // error was already logged in bad_lemon constructor
-   }
+    }
    
-   if (menu) delete menu;
+    if (menu) delete menu;
    
-   // shutdown fonts
-   TTF_Quit();
+    // shutdown fonts
+    TTF_Quit();
 
-   // shutdown sdl
-   SDL_Quit();
+    // shutdown sdl
+    SDL_Quit();
 
-   if(strcmp("y", g_opts.get_string(KEY_PI2JAMMAJOYSTICK) ) == 0) {
-   // close bcm2835
-   bcm2835_close();
-   }
+    if(strcmp("y", g_opts.get_string(KEY_PI2JAMMAJOYSTICK) ) == 0) {
+        // close bcm2835
+        bcm2835_close();
+    }
 
    
-   return 0;
-}
+    return 0;
+ }
